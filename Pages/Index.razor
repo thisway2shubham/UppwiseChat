@@ -1,0 +1,294 @@
+﻿@page "/"
+@using Newtonsoft.Json;
+@using System.Text;
+
+<PageTitle>UppwsieChat</PageTitle>
+
+<div class="container">
+
+    <div class="row" >
+
+        <div class="col-4"></div>
+              
+        
+        <div class="col-4 chat-box" >
+            <div class="chat-box-header">
+                ChatBot
+                <span class="chat-box-toggle"><i class="material-icons">X</i></span>
+            </div>
+            <div class="messages">
+                @for (int i = 0; i < messages.Count; i++)
+                {
+                    @if (i % 2 == 0)
+                    {
+                        <div class="question">@messages[i]</div>
+                    }
+                    else
+                    {
+                        <div class="response">@messages[i]</div>
+                    }
+                }
+                
+            </div>
+            <div class="textMessage">
+
+                <form>
+                    <input @bind="message" placeholder="Send a the prompt" id="chat-input" />
+                    <button @onclick="SendMessage" class="chat-submit" id="chat-submit">Send</button>    @* <i class="material-icons"> -> </i> *@
+                </form>
+
+            </div>
+
+        </div>
+
+        <div class="col-4"></div>
+    </div>
+</div>
+
+@code {
+
+    public string message;
+    public string testing;
+    //public string propmtmsg = "You are assisting with the following points related to projects: 1.project title, 2.project description, 3.scope of that project in POINTS in overall 40 words on the topics";
+
+    public List<string> messages = new List<string>();
+
+    private static HttpClient Http = new HttpClient();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+    public async Task SendMessage()
+    {
+        try
+        {
+
+            Http = new HttpClient();
+            messages.Add(message);
+
+            //var apiKey = "56945508c6164a1f9b9cd8bfccbc7e04";                                      //azure api key
+            //var apiURL = "--";                                                                    //azure api endpoint
+
+            var apiKey = "56945508c6164a1f9b9cd8bfccbc7e04";
+            var apiUrl = "https://spm-language-openai.openai.azure.com";
+
+            Http.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+            // Check if the message starts with "#p"
+            // if (message.StartsWith("#p"))
+            // {
+            //     message = message.Substring(2);
+                
+            // }
+            // else
+            // {
+            //     Console.WriteLine("Try to prompt using prefix '#p'");
+            // }
+
+            //message = $"1. Project Title: [generate title of project related to message] \n2. Project Description: [generate description of the project related to project title]\n3. Scope of the project: [generate scope details of the project]";
+
+            var jsonContent = new
+            {
+                prompt = message,
+                model = "text-davinci-003",                                               //engines/gpt-4
+                max_tokens = 500
+            };
+
+            //here i have made the api call
+            var responseContent = await Http.PostAsync(apiUrl, new StringContent(JsonConvert.SerializeObject(jsonContent), Encoding.UTF8, "application/json"));
+
+            //read the response as String
+            var resContext = await responseContent.Content.ReadAsStringAsync();
+
+            //deserialize the response into a dynamic object
+            var data = JsonConvert.DeserializeObject<dynamic>(resContext);
+
+            // Extract the response related to the points
+            var responseText = data.choices[0].text.ToString();
+            
+            
+            // var projectTitle = "";
+            // var projectDescription = ""; 
+            // var scopeOfProject = "";
+            
+
+            // parse the response to extract information related to points
+            // var responseLines = responseText.Split('\n');
+            // foreach (var line in responseLines)
+            // {
+            //     if (line.StartsWith("1. Project Title:"))
+            //     {
+            //         projectTitle = line.Replace("1. Project Title:", "").Trim();
+            //     }
+            //     else if (line.StartsWith("2. Project Description:"))
+            //     {
+            //         projectDescription = line.Replace("2. Project Description:", "").Trim();
+            //     }
+            //     else if (line.StartsWith("3. Scope of the project:"))
+            //     {
+            //         scopeOfProject = line.Replace("3. Scope of the project:", "").Trim();
+            //     }
+                
+            // }
+
+
+            messages.Add(responseText);
+            Console.WriteLine($"Message sent: {message}");
+            message = "";
+
+            StateHasChanged();  // will trigger the ui update
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error sending message: {ex.Message}");
+        }
+    }
+}
+
+
+
+
+
+
+@* <div class="container">
+    
+    <div class="row">
+       
+        <div class="col-4">
+            <p>@testing</p>
+
+        </div>
+        <div class="col-4">
+            <div class="header">
+                <h4 style="font-family: 'Lucida Handwriting', cursive; margin-top: 6px;">SPM OpenAI</h4>
+            </div>
+            <div class="messages">
+                @for (int i = 0; i < messages.Count; i++)
+                {
+                    @if (i % 2 == 0)
+                    {
+                        <div class="question">@messages[i]</div>
+                    }
+                    else
+                    {
+                        <div class="response">@messages[i]</div>
+                    }
+                }
+                <div class="textMessage">
+                    <span><input @bind="message" /></span>
+                    <span><button @onclick="SendMessage">Send</button></span>
+                </div>
+            </div>
+            
+            
+        </div>
+        <div class="col-4"></div>
+     </div>
+</div>
+
+@code{
+
+    public string message;
+    public string testing;
+    //public string propmtmsg = "You are assisting with the following points related to projects: 1.project title, 2.project description, 3.scope of that project in POINTS in overall 40 words on the topics";
+
+    public List<string> messages = new List<string>();
+
+    private static HttpClient Http = new HttpClient();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    public async Task SendMessage()
+    {
+        try {
+
+            Http = new HttpClient();
+            messages.Add(message);
+
+            var apiKey = "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";
+            var apiUrl = "https://api.openai.com/v1/completions";
+            Http.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+            message = $"Generate response related to\n1. Project Title:[title of project] \n2. Project Description: [describe project]\n3. Scope of the project: [scope details]\n4. Tentative Days this project can take:[tentative days]";
+
+            var jsonContent = new
+            {
+                prompt = message,
+                model = "text-davinci-003",                                               //engines/gpt-4
+                max_tokens = 500
+            };
+
+            //here i have made the api call
+            var responseContent = await Http.PostAsync(apiUrl,
+            new StringContent(JsonConvert.SerializeObject(jsonContent), Encoding.UTF8, "application/json"));
+
+            //read the response as String
+            var resContext = await responseContent.Content.ReadAsStringAsync();
+
+            //deserialize the response into a dynamic object
+            var data = JsonConvert.DeserializeObject<dynamic>(resContext);
+
+            // Extract the response related to the points
+            var responseText = data.choices[0].text.ToString();
+            var projectTitle = "";
+            var projectDescription = ""; 
+            var scopeOfProject = "";
+            var daysTentative = 0;
+
+            // parse the response to extract information related to points
+            var responseLines = responseText.Split('\n');
+            foreach (var line in responseLines)
+            {
+                if (line.StartsWith("1. Project Title:"))
+                {
+                    projectTitle = line.Replace("1. Project Title:", "").Trim();
+                }
+                else if (line.StartsWith("2. Project Description:"))
+                {
+                    projectDescription = line.Replace("2. Project Description:", "").Trim();
+                }
+                else if (line.StartsWith("3. Scope of the project:"))
+                {
+                    scopeOfProject = line.Replace("3. Scope of the project:", "").Trim();
+                }
+                else if (line.StartsWith("4. Tentative Days this project can take:"))
+                {
+                    daysTentative = line.Replace("4. Tentative Days this project can take:", "").Trim();
+                }
+            }
+
+
+            messages.Add(responseText);
+            Console.WriteLine($"Message sent: {message}");
+            message = "";
+
+            StateHasChanged();  // trigger UI update
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine($"Error sending message: {ex.Message}");
+        }
+    }
+} *@
+
+
+@* var requestBody = new RequestBody
+{
+    model = "text-davinci-003",
+    temperature = 0.7,
+    max_tokens = 500,
+    messages = new List<Message>
+    {
+        // Use a system message to set the context or behavior
+        new Message { role = "system", content = "You are assisting with the following points:" },
+        new Message { role = "user", content = "1. Describe the product features." },
+        new Message { role = "user", content = "2. Provide pricing information." },
+        new Message { role = "user", content = "3. Explain the warranty terms." }
+    }
+}; *@
